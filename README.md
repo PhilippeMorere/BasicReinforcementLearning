@@ -8,6 +8,9 @@ Simple Reinforcement learning example, based on the Q-function.
 
 The little triangles represent the values of the Q function for each state and each action. Green is positive and red is negative.
 
+# Demo (Q-Learning)
+http://youtu.be/tiTR8F41_v0
+
 # Run
 Three different agents are currently implemented.
 ## Q-Learning
@@ -26,5 +29,4 @@ Run:
 python SarsaLambdaLearner.py
 ```
 
-# Demo (Q-Learning)
-http://youtu.be/tiTR8F41_v0
+
