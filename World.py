@@ -1,6 +1,10 @@
 __author__ = 'philippe'
+import random
 from Tkinter import *
 master = Tk()
+
+# probability to run the selected action
+prob_move = 1.0
 
 triangle_size = 0.1
 cell_score_min = -0.2
@@ -18,6 +22,7 @@ walk_reward = -0.04
 walls = [(1, 1), (1, 2), (2, 1), (2, 2)]
 specials = [(4, 1, "red", -1), (4, 0, "green", 1)]
 cell_scores = {}
+cell_action_scores = {}
 
 
 def create_triangle(i, j, action):
@@ -45,24 +50,44 @@ def create_triangle(i, j, action):
 
 def render_grid():
     global specials, walls, Width, x, y, player
+    # For each cell
     for i in range(x):
         for j in range(y):
-            board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill="white", width=1)
+            # Create a square (white by default)
+            cell = board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill="white", width=1)
+            cell_scores[(i,j)] = cell
             temp = {}
+            # For each action, create a little triangle
             for action in actions:
                 temp[action] = create_triangle(i, j, action)
-            cell_scores[(i,j)] = temp
+            cell_action_scores[(i,j)] = temp
+    # Create special cells
     for (i, j, c, w) in specials:
         board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill=c, width=1)
+    # Create walls
     for (i, j) in walls:
         board.create_rectangle(i*Width, j*Width, (i+1)*Width, (j+1)*Width, fill="black", width=1)
 
 render_grid()
 
-
-def set_cell_score(state, action, val):
+# Update cell color to reflect V values
+def set_cell_score(state, val):
     global cell_score_min, cell_score_max
-    triangle = cell_scores[state][action]
+    cell = cell_scores[state]
+    green_dec = int(min(255, max(0, (val - cell_score_min) * 255.0 / (cell_score_max - cell_score_min))))
+    green = hex(green_dec)[2:]
+    red = hex(255-green_dec)[2:]
+    if len(red) == 1:
+        red += "0"
+    if len(green) == 1:
+        green += "0"
+    color = "#" + red + green + "00"
+    board.itemconfigure(cell, fill=color)
+
+# Update triangle colors to reflect Q values
+def set_cell_action_score(state, action, val):
+    global cell_score_min, cell_score_max
+    triangle = cell_action_scores[state][action]
     green_dec = int(min(255, max(0, (val - cell_score_min) * 255.0 / (cell_score_max - cell_score_min))))
     green = hex(green_dec)[2:]
     red = hex(255-green_dec)[2:]
@@ -78,6 +103,16 @@ def try_move(dx, dy):
     global player, x, y, score, walk_reward, me, restart
     if restart == True:
         restart_game()
+
+    # Add a bit of randomness
+    if random.random() > prob_move:
+        if dx == 0:
+            dx = -1 if random.random() > 0.5 else 1
+            dy = 0
+        else:
+            dx = 0
+            dy = -1 if random.random() > 0.5 else 1
+
     new_x = player[0] + dx
     new_y = player[1] + dy
     score += walk_reward
